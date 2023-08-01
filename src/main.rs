@@ -1,6 +1,10 @@
 mod utils;
+#[macro_use]
+mod macros;
 //mod simulatenoise;
 mod create_hs;
+mod onenoise;
+mod fftconvolve;
 use clap::Parser;
 use std::error::Error;
 

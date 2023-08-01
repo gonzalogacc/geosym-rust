@@ -85,7 +85,7 @@ pub fn load_config_toml(filename: &Path) -> Result<Config, io::Error> {
 #[cfg(test)]
 mod tests {
     use crate::utils::{load_config_toml, model_list_from_config};
-    use crate::create_hs::Units;
+    // use crate::create_hs::Units;
     use std::path::Path;
     
     #[test]
@@ -105,7 +105,7 @@ mod tests {
         }
 
         println!("{:?}", response);
-        let expected: Vec<Vec<f32>> = vec![vec![1.0, 5.0], vec![1.0, 5.0]];
+        //let expected: Vec<Vec<f32>> = vec![vec![1.0, 5.0], vec![1.0, 5.0]];
         //assert_eq!(response, expected);
         //assert_eq!(1,2);
     }

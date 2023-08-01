@@ -5,8 +5,23 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+# [lib] # Eventualmente va a haber que armar una librería...
+# name = "geosym"
+# path = "./src/lib.rs"
+
 [dependencies]
 serde = {version = "1.0.171", features = ["derive"]}
 toml = "0.7.6"
 clap = { version = "4.0", features = ["derive"] }
 rand = "0.8.5"
+# No se si es el generador de numeros adecuado, es el primero seedable que encontré
+rand_distr = "0.4.3"
+rand_chacha = "0.3.1"
+# Dependencias de fftconvolve que pueden volar en algún momento.
+ndarray = "^0.15"
+ndarray-linalg = "^0.16"
+num-traits = "^0.2"
+num = "^0.4"
+easyfft = "^0.2"
+# Para escribir bytes
+byteorder = "^1.4.3"

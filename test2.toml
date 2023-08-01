@@ -14,7 +14,7 @@ sigma=0.2
 kappa=0.1
 one_minus_phi=0.01 # GGN_1mphi
 dt=1 # Sampling period
-units="mom" # TS-format
+units="Mom" # TS-format
 
 [white_noise]
 m=1000

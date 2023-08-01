@@ -13,7 +13,7 @@ sigma=0.2
 kappa=0.1
 one_minus_phi=0.01 # GGN_1mphi
 dt=1 # Sampling period
-units="mom" # TS-format
+units="Mom" # TS-format
 
 [noise_models.linear]
 time_noise_start=0
@@ -22,4 +22,4 @@ sigma=0.2
 kappa=0.1
 one_minus_phi=0.01 # GGN_1mphi
 dt=1 # Sampling period
-units="mom" # TS-format
+units="Mom" # TS-format

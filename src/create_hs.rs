@@ -1,8 +1,9 @@
 use std::io;
-use std::error::Error;
+//use std::error::Error;
 //use crate::utils::Units;
 use serde::Deserialize;
 
+#[allow(dead_code)] // Puede que haya errores listados no implementados
 #[derive(Debug)]
 pub enum ModelError {
     IOError(io::Error),
@@ -11,18 +12,20 @@ pub enum ModelError {
 #[allow(dead_code)]
 #[derive(Deserialize, Debug, Copy, Clone)]
 pub enum Units {
-    mom,
-    msf,
+    Mom,
+    Msf,
 }
+
+type ImpulseH = Vec<f32>;
 
 #[derive(Debug)]
 pub struct SigmaH {
     pub sigma: f32,
-    pub h: Vec<f32>,
+    pub h: ImpulseH,
 }
 
 impl SigmaH {
-    fn new(sigma: f32, h: Vec<f32>) -> SigmaH {
+    fn new(sigma: f32, h: ImpulseH) -> SigmaH {
         SigmaH {
             sigma,
             h,
@@ -32,22 +35,16 @@ impl SigmaH {
 
 pub fn white(m: usize, sigma: f32) -> Result<SigmaH, ModelError> {
     // Create impulse function for White noise.
-    let mut h: Vec<f32> = vec![0.0; m];
-    h[0] = sigma;
+    let mut h: ImpulseH = vec![0.0; m];
+    h[0] = 1.0; //sigma; El sigma se aplica en create_noise
     Ok(SigmaH::new(sigma, h))
 }
 
-#[derive(Debug)]
-pub struct PowerLawReturn {
-    gmsv: f32,
-    rpf: SigmaH,
-}
-
-pub fn powerlaw(m: usize, kappa: f32, sigma: f32, units: Units, dt: f32) -> Result<PowerLawReturn, ModelError> {
+pub fn powerlaw(m: usize, kappa: f32, sigma: f32, units: Units, dt: f32) -> Result<SigmaH, ModelError> {
     let d = -kappa/2.0;
     let gmsv = gauss_markov_scale_variance(sigma, d, units, dt).unwrap();
-    let rpf = recursion_power_flicker_rw(m, d);
-    Ok(PowerLawReturn {gmsv, rpf})
+    let rpf = recursion_power_flicker_rw(m, d).unwrap();
+    Ok(SigmaH::new(gmsv,rpf))
 }
 
 //def Powerlaw(
@@ -81,11 +78,11 @@ pub fn powerlaw(m: usize, kappa: f32, sigma: f32, units: Units, dt: f32) -> Resu
 //pub fn AR1() {
 //}
 
-fn recursion_power_flicker_rw(m: usize, d: f32) -> SigmaH {
+fn recursion_power_flicker_rw(m: usize, d: f32) -> Result<ImpulseH, ModelError> {
     // Recursion to create impulse function for Powerlay, Flicker or RW noise
     // Flicker is Powerlaw with spectral density 0.5
     // RandomWalk is Powerlaw with spectral density 1.0
-    let mut h: Vec<f32> = vec![0.0; m];
+    let mut h: ImpulseH = vec![0.0; m];
     
     h[0] = 1.0;
     let mut h0: f32 = 1.0;
@@ -93,11 +90,10 @@ fn recursion_power_flicker_rw(m: usize, d: f32) -> SigmaH {
         h[i] = (d+i as f32-1.0)/i as f32 * h0;
         h0 = (d+i as f32-1.0)/i as f32 * h0;
     }
-    let sigma:f32 = 0.0;
-    SigmaH::new(sigma, h)
+    Ok(h)
 }
 
-fn recursion_ggm(m: usize, d: f32, one_minus_phi: f32) -> Result<SigmaH, ModelError> {
+fn recursion_ggm(m: usize, d: f32, one_minus_phi: f32) -> Result<ImpulseH, ModelError> {
     let mut h: Vec<f32> = vec![0.0; m];
     h[0] = 1.0;
     let mut h0: f32 = 1.0;
@@ -106,8 +102,7 @@ fn recursion_ggm(m: usize, d: f32, one_minus_phi: f32) -> Result<SigmaH, ModelEr
         h[i] = (d+i as f32-1.0)/i as f32 * h0 * (1.0 - one_minus_phi);
         h0 = (d+i as f32-1.0)/i as f32 * h0 * (1.0 - one_minus_phi);
     }
-    let sigma:f32 = 0.0;
-    Ok(SigmaH::new(sigma, h))
+    Ok(h)
 }
 
 fn gauss_markov_scale_variance(
@@ -118,8 +113,8 @@ fn gauss_markov_scale_variance(
     ) -> Result<f32, ModelError> {
     
     let sigma2: f32 = match units {
-        Units::mom => (dt as f32/365.25).powf(0.5*spectral_density),
-        Units::msf => (dt as f32/3600.0).powf(0.5*spectral_density),
+        Units::Mom => (dt as f32/365.25).powf(0.5*spectral_density),
+        Units::Msf => (dt as f32/3600.0).powf(0.5*spectral_density),
     };
     Ok(sigma*sigma2)
 }
@@ -148,27 +143,6 @@ fn gauss_markov_scale_variance(
 //
 //    return sigma
 
-macro_rules! assert_eq_float {
-    ($v1: expr, $v2: expr, $d: expr ) => {
-        if ($v1 - $v2).abs() > $d {
-            panic!("Values {:?} != {:?} differ more than {:?}", $v1, $v2, $d);
-        }
-    }
-}
-
-macro_rules! assert_eq_float_vec {
-    ($v1: expr, $v2: expr, $d: expr ) => {
-        if $v1.len() != $v2.len() {
-            panic!("Vectors have different length {:?} : {:?}", $v1.len(), $v2.len());
-        }
-        for (i, value) in $v1.iter().enumerate(){
-            println!("{:?}, {:?}", i, value);
-            if (value - $v2[i]).abs() > $d {
-                panic!("Values {:?} != {:?} differ more than {:?}", value, $v2[i], $d);
-            }
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -194,10 +168,10 @@ mod tests {
         // Write other tests
         let d: f32 = 0.5;
         let m: usize = 10;
-        let response = recursion_power_flicker_rw(m, d);
+        let response = recursion_power_flicker_rw(m, d).unwrap();
         // Taken from the python function (run the function in a shell)
         let expected: Vec<f32> = vec![1., 0.5, 0.375 , 0.3125, 0.2734375 ,0.24609375, 0.22558594, 0.20947266, 0.19638062, 0.18547058];
-        assert_eq!(response.h, expected);
+        assert_eq!(response, expected);
     }
 
     #[test]
@@ -205,7 +179,7 @@ mod tests {
         // Write other tests
         let d: f32 = 0.1;
         let m: usize = 100;
-        let response = recursion_power_flicker_rw(m, d);
+        let response = recursion_power_flicker_rw(m, d).unwrap();
         
         // Taken from the python function (run the function in a shell)
         let expected: Vec<f32> = vec![1., 0.1 ,0.055 ,0.0385 ,0.0298375 ,
@@ -229,7 +203,7 @@ mod tests {
        0.00183073, 0.00181262, 0.00179489, 0.00177752, 0.0017605 ,
        0.00174382, 0.00172747, 0.00171145, 0.00169573, 0.00168031];
          
-        assert_eq_float_vec!(response.h, expected, 0.000001);
+        assert_eq_float_vec!(response, expected, 0.000001);
 
     }
 
@@ -242,7 +216,7 @@ mod tests {
         let response = recursion_ggm(m, d, one_minus_phi).unwrap();
         let expected: Vec<f32> = vec![1., 0.495, 0.3675375 , 0.30321844, 0.26266297, 0.23403271, 0.21238468, 0.1952422 , 0.18120917, 0.16943057];
         
-        assert_eq_float_vec!(response.h, expected, 0.000001);
+        assert_eq_float_vec!(response, expected, 0.000001);
     }
 
     //#[test]
@@ -268,9 +242,9 @@ mod tests {
         let expected_number: f32 = 0.3847024397698062;
         let expected_array: Vec<f32> = vec![1. , 0.5, 0.375, 0.3125, 0.2734375 , 0.24609375, 0.22558594, 0.20947266, 0.19638062, 0.18547058, 0.17619705, 0.1681881 , 0.16118026, 0.15498102, 0.14944598, 0.14446445, 0.13994993, 0.13583376, 0.1320606 , 0.12858532];
         
-        let response = powerlaw(m, kappa, sigma, Units::mom, dt).unwrap();
-        assert_eq!(response.gmsv, expected_number);
-        assert_eq_float_vec!(response.rpf.h, expected_array, 0.001);
+        let response = powerlaw(m, kappa, sigma, Units::Mom, dt).unwrap();
+        assert_eq!(response.sigma, expected_number);
+        assert_eq_float_vec!(response.h, expected_array, 0.001);
     }
 
 }
