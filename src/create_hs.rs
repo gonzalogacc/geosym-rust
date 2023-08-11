@@ -21,33 +21,18 @@ pub struct SigmaH {
     pub h: Vec<f32>,
 }
 
-impl SigmaH {
-    fn new(sigma: f32, h: Vec<f32>) -> SigmaH {
-        SigmaH {
-            sigma,
-            h,
-        }
-    }
-}
-
 pub fn white(m: usize, sigma: f32) -> Result<SigmaH, ModelError> {
     // Create impulse function for White noise.
     let mut h: Vec<f32> = vec![0.0; m];
     h[0] = sigma;
-    Ok(SigmaH::new(sigma, h))
+    Ok(SigmaH {sigma, h})
 }
 
-#[derive(Debug)]
-pub struct PowerLawReturn {
-    gmsv: f32,
-    rpf: SigmaH,
-}
-
-pub fn powerlaw(m: usize, kappa: f32, sigma: f32, units: Units, dt: f32) -> Result<PowerLawReturn, ModelError> {
+pub fn powerlaw(m: usize, kappa: f32, sigma: f32, units: Units, dt: f32) -> Result<SigmaH, ModelError> {
     let d = -kappa/2.0;
     let gmsv = gauss_markov_scale_variance(sigma, d, units, dt).unwrap();
     let rpf = recursion_power_flicker_rw(m, d);
-    Ok(PowerLawReturn {gmsv, rpf})
+    Ok(SigmaH {sigma: gmsv, h: rpf})
 }
 
 //def Powerlaw(
@@ -81,7 +66,7 @@ pub fn powerlaw(m: usize, kappa: f32, sigma: f32, units: Units, dt: f32) -> Resu
 //pub fn AR1() {
 //}
 
-fn recursion_power_flicker_rw(m: usize, d: f32) -> SigmaH {
+fn recursion_power_flicker_rw(m: usize, d: f32) -> Vec<f32> {
     // Recursion to create impulse function for Powerlay, Flicker or RW noise
     // Flicker is Powerlaw with spectral density 0.5
     // RandomWalk is Powerlaw with spectral density 1.0
@@ -93,11 +78,10 @@ fn recursion_power_flicker_rw(m: usize, d: f32) -> SigmaH {
         h[i] = (d+i as f32-1.0)/i as f32 * h0;
         h0 = (d+i as f32-1.0)/i as f32 * h0;
     }
-    let sigma:f32 = 0.0;
-    SigmaH::new(sigma, h)
+    h
 }
 
-fn recursion_ggm(m: usize, d: f32, one_minus_phi: f32) -> Result<SigmaH, ModelError> {
+fn recursion_ggm(m: usize, d: f32, one_minus_phi: f32) -> Vec<f32> {
     let mut h: Vec<f32> = vec![0.0; m];
     h[0] = 1.0;
     let mut h0: f32 = 1.0;
@@ -106,8 +90,7 @@ fn recursion_ggm(m: usize, d: f32, one_minus_phi: f32) -> Result<SigmaH, ModelEr
         h[i] = (d+i as f32-1.0)/i as f32 * h0 * (1.0 - one_minus_phi);
         h0 = (d+i as f32-1.0)/i as f32 * h0 * (1.0 - one_minus_phi);
     }
-    let sigma:f32 = 0.0;
-    Ok(SigmaH::new(sigma, h))
+    h
 }
 
 fn gauss_markov_scale_variance(
@@ -115,38 +98,14 @@ fn gauss_markov_scale_variance(
     spectral_density: f32, 
     units: Units, 
     dt: f32
-    ) -> Result<f32, ModelError> {
+    ) -> f32 {
     
     let sigma2: f32 = match units {
         Units::mom => (dt as f32/365.25).powf(0.5*spectral_density),
         Units::msf => (dt as f32/3600.0).powf(0.5*spectral_density),
     };
-    Ok(sigma*sigma2)
+    sigma*sigma2
 }
-
-//def gauss_markov_scale_variance(
-//        *,
-//        sigma,
-//        spectral_density,
-//        units,
-//        dt,
-//    ):
-//    """
-//    Gauss Markov Models needs scaling of the variance for taking into account
-//    the time and period units.
-//
-//    This scale applies to Powerlaw noise, Flicker Noise, Random Walk Noise and
-//    Generalized Gauss Markov noise.
-//    """
-//
-//    if units=='mom':
-//        sigma *= math.pow(dt/365.25,0.5*spectral_density)  # Already adjust for scaling
-//    elif units=='msf':
-//        sigma *= math.pow(dt/3600.0,0.5*spectral_density)  # Already adjust for scaling
-//    else:
-//        raise ValueError('unknown scaling: {0:s}'.format(units))
-//
-//    return sigma
 
 macro_rules! assert_eq_float {
     ($v1: expr, $v2: expr, $d: expr ) => {
@@ -272,7 +231,4 @@ mod tests {
         assert_eq!(response.gmsv, expected_number);
         assert_eq_float_vec!(response.rpf.h, expected_array, 0.001);
     }
-
 }
-
-
