@@ -1,7 +1,9 @@
-mod utils;
+//mod utils;
 //mod simulatenoise;
 #[macro_use]
 mod macros;
+mod noise;
+mod fftconvolve;
 mod create_hs;
 use clap::Parser;
 use std::error::Error;

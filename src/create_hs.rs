@@ -11,8 +11,8 @@ pub enum ModelError {
 #[allow(dead_code)]
 #[derive(Deserialize, Debug, Copy, Clone)]
 pub enum Units {
-    mom,
-    msf,
+    Mom,
+    Msf,
 }
 
 #[derive(Debug)]
@@ -101,8 +101,8 @@ fn gauss_markov_scale_variance(
     ) -> Result<f32,ModelError> {
     
     let sigma2: f32 = match units {
-        Units::mom => (dt as f32/365.25).powf(0.5*spectral_density),
-        Units::msf => (dt as f32/3600.0).powf(0.5*spectral_density),
+        Units::Mom => (dt as f32/365.25).powf(0.5*spectral_density),
+        Units::Msf => (dt as f32/3600.0).powf(0.5*spectral_density),
     };
     Ok(sigma*sigma2)
 }
@@ -186,9 +186,9 @@ mod tests {
     //fn gauss_markov_scale_variance_ok(){
     //    let sigma: f32 = 0.2;
     //    let spectral_density: f32 = 0.5;
-    //    let units: Units = Units::mom;
+    //    let units: Units = Units::Mom;
     //    
-    //    let response = gauss_markov_scale_variance(0.2, 0.5, Units::mom, 1);
+    //    let response = gauss_markov_scale_variance(0.2, 0.5, Units::Mom, 1);
     //    let expected: f32 = 0.04574908785331594;
     //    assert_eq_float!(response, expected, 0.001);
     //    
@@ -205,7 +205,7 @@ mod tests {
         let expected_number: f32 = 0.3847024397698062;
         let expected_array: Vec<f32> = vec![1. , 0.5, 0.375, 0.3125, 0.2734375 , 0.24609375, 0.22558594, 0.20947266, 0.19638062, 0.18547058, 0.17619705, 0.1681881 , 0.16118026, 0.15498102, 0.14944598, 0.14446445, 0.13994993, 0.13583376, 0.1320606 , 0.12858532];
         
-        let response = powerlaw(m, kappa, sigma, Units::mom, dt).unwrap();
+        let response = powerlaw(m, kappa, sigma, Units::Mom, dt).unwrap();
         assert_eq!(response.sigma , expected_number);
         assert_eq_float_vec!(response.h, expected_array, 0.001);
     }
