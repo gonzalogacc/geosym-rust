@@ -12,3 +12,9 @@ clap = { version = "4.0", features = ["derive"] }
 rand = "0.8.5"
 rand_distr = "0.4.3"
 rand_chacha = "0.3.1"
+# Dependencias de fftconv_externo
+ndarray = "^0.15"
+ndarray-linalg = "^0.16"
+num-traits = "^0.2"
+num = "^0.4"
+easyfft = "^0.2"

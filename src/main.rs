@@ -4,6 +4,7 @@
 mod macros;
 mod noise;
 mod fftconvolve;
+mod fftconv_externo;
 mod create_hs;
 use clap::Parser;
 use std::error::Error;
