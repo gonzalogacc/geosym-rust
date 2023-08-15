@@ -24,7 +24,9 @@ pub struct SigmaH {
 pub fn white(m: usize, sigma: f32) -> Result<SigmaH, ModelError> {
     // Create impulse function for White noise.
     let mut h: Vec<f32> = vec![0.0; m];
-    h[0] = sigma;
+    // Tomamos la convención de que la función de impulso se escala antes de la convolución.
+    // h[0] = sigma; 
+    h[0] = 1.0;
     Ok(SigmaH {sigma, h})
 }
 
