@@ -39,14 +39,14 @@ impl Model for Powerlaw {
     }
 }
 
-pub fn get_model(m: &str) -> Box<dyn Model> {
-    match m {
-        "white" => Box::new( WhiteNoise {m: 10, sigma: 1.0} ),
-        "powerlaw" => Box::new( Powerlaw {m: 10, sigma: 1.0, kappa: 0.5, dt: 1.0, units: create_hs::Units::Mom } ),
-        &_ => todo!()
-    }
-}
-
+// Gonzalo dice que un struct TotalNoise tiene que tener model_to_suma_de_todo
+// como método
+//
+// Te dejo como tarea poner aca tu struct ideal.
+//
+// struct TotalNoise {
+// }
+//
 pub fn model_to_h(ms: Vec<Box<dyn Model>> ) -> Vec<Vec<f32>> {
     ms.into_iter().map(|m| m.generate_h().unwrap().h).collect()
 }
@@ -59,9 +59,6 @@ mod tests {
 
     #[test]
     fn test_white() {
-        // let models = vec!["white","white"];
-        // let ms: Vec<Box<dyn Model>> = 
-        //     models.into_iter().map(|st| get_model(st)).collect();
         let ms: Vec<Box<dyn Model>> = vec![ Box::new( WhiteNoise {m: 10, sigma: 1.0} ),
                        Box::new( WhiteNoise {m: 10, sigma: 1.0} ) ];
         assert_eq!( model_to_h(ms),vec![vec![1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],vec![1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]] );
