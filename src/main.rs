@@ -6,6 +6,7 @@ mod noise;
 mod fftconvolve;
 mod fftconv_externo;
 mod create_hs;
+mod combinacion;
 use clap::Parser;
 use std::error::Error;
 
