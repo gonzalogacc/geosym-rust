@@ -54,7 +54,7 @@ pub fn model_to_h(ms: Vec<Box<dyn Model>> ) -> Vec<Vec<f32>> {
 #[cfg(test)]
 mod tests {
     use crate::combinacion::{
-        Model, WhiteNoise, get_model, model_to_h
+        Model, WhiteNoise, model_to_h
     };
 
     #[test]
