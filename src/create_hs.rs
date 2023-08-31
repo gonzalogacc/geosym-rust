@@ -1,8 +1,9 @@
 use std::io;
-use std::error::Error;
+//use std::error::Error;
 //use crate::utils::Units;
 use serde::Deserialize;
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum ModelError {
     IOError(io::Error),

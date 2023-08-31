@@ -1,11 +1,11 @@
 
-macro_rules! assert_eq_float {
-    ($v1: expr, $v2: expr, $d: expr ) => {
-        if ($v1 - $v2).abs() > $d {
-            panic!("Values {:?} != {:?} differ more than {:?}", $v1, $v2, $d);
-        }
-    }
-}
+// macro_rules! assert_eq_float {
+//     ($v1: expr, $v2: expr, $d: expr ) => {
+//         if ($v1 - $v2).abs() > $d {
+//             panic!("Values {:?} != {:?} differ more than {:?}", $v1, $v2, $d);
+//         }
+//     }
+// }
 
 macro_rules! assert_eq_float_vec {
     ($v1: expr, $v2: expr, $d: expr ) => {
