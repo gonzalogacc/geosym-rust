@@ -4,7 +4,7 @@
 mod macros;
 mod noise;
 mod fftconvolve;
-mod fftconv_externo;
+// mod fftconv_externo;
 mod create_hs;
 mod combinacion;
 use clap::Parser;
