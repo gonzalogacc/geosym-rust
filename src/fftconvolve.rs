@@ -1,4 +1,5 @@
 extern crate nalgebra as na;
+
 use na::{DVector};
 
 use fft_convolver::FFTConvolver;
@@ -33,7 +34,8 @@ pub fn toeplitz_covariance_to_impulse(
 {
     let m = cov.len();
 
-    // Quiero un 0 adelante de u, porque a veces quiero mirar ese cero, que en el paper es Z u y aveces no, lo que en el paper es u.
+    // Quiero un 0 adelante de u, porque a veces quiero mirar ese cero, que en el paper es Z u y
+    // aveces no, lo que en el paper es u.
     let mut zu: DVector<f32> = DVector::repeat(m+1,0.0);
 
     {
@@ -79,6 +81,8 @@ pub fn toeplitz_covariance_to_impulse(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use na::DMatrix;
+
     // use ndarray::{Array1, Array2};
 
     // #[test]
@@ -92,6 +96,33 @@ mod tests {
     //     assert_eq_float_vec!(out, expected, 0.000001);
 
     // }
+
+    fn toeplitz_matrix( v: Vec<f32> ) -> na::DMatrix<f32>
+    {
+        let m = v.len();
+        //let largo=np.concatenate([v[::-1],v[1:]])
+        let largo: Vec<f32> = v.clone().into_iter().rev().chain(
+                              v.clone()[1..m].into_iter().copied()).collect();
+
+        let mx: Vec<f32> = (0..m).map(|i| largo.clone()[m-1-i..2*m-i-1]
+                                            .into_iter().copied().collect::<Vec<f32>>())
+                                   .flatten().collect();
+        na::DMatrix::from_vec(m,m,mx)
+    }
+
+    fn cholesky_toeplitz_into_impulse( v: Vec<f32> ) -> Vec<f32>
+    {
+        let m = v.len();
+        let t = toeplitz_matrix(v);
+        //let t_data : Vec<f32> = t.cholesky().expect("La Matriz no admite descomposición LU")
+        //                         .l().rows(m-1,1).into_owned().data.as_slice().iter()
+        //                         .rev().copied().collect();
+        let t_data : Vec<f32> = t.cholesky().expect("La Matriz no admite descomposición LU")
+                                   .l().rows(m-1,1).into_owned().data.as_slice().iter()
+                                   .chain(&[0.0])
+                                   .rev().take(m).copied().collect();
+        t_data
+    }
 
     #[test]
     fn test_fftconvolve2_1d() {
@@ -112,5 +143,25 @@ mod tests {
         let expected: Vec<f32> = vec![ 0.        ,  0.86964539, -0.07181627,  0.10137304,  0.26130983];
 
         assert_eq_float_vec!(out, expected, 0.00001);
+    }
+
+    #[test]
+    fn test_toeplitz_covariance_to_impulse_cholesky() {
+        //
+        // Cualquier vector que empiece con un numero y tenga numeros menores
+        // después, ordenados de menor a mayor, forma una matriz valida.
+        
+        let input: Vec<f32> = vec![1.0,0.1,0.2,0.3,0.4];
+        let out = toeplitz_covariance_to_impulse(input.clone());
+        let expected: Vec<f32> = cholesky_toeplitz_into_impulse(input);
+
+        assert_eq_float_vec!(out, expected, 0.00001);
+
+        let input: Vec<f32> = vec![3.8,0.1,0.2,0.35,0.4,0.42,0.48];
+        let out = toeplitz_covariance_to_impulse(input.clone());
+        let expected: Vec<f32> = cholesky_toeplitz_into_impulse(input);
+
+        assert_eq_float_vec!(out, expected, 0.00001);
+
     }
 }
