@@ -2,7 +2,7 @@
 use rand::Rng;
 // A los RNG de Rust que implementan .sample se les puede pasar una distribución.
 use rand_distr::{Normal};
-use crate::fftconvolve::fftconvolve_envuelto2;
+use crate::vector_ops::fftconvolve_envuelto;
 use crate::create_hs::SigmaH;
 
 // Crear el ruido a partir de un impulso (SigmaH) y un generador de numeros aleatorios.
@@ -21,7 +21,7 @@ fn impulse_to_noise<R: Rng>(impulso: SigmaH, mut rng: R) -> Vec<f32> {
         *v = *v * sigma;
     }
 
-    fftconvolve_envuelto2(h,vals)[0..m].to_vec()
+    fftconvolve_envuelto(h,vals)//[0..m].to_vec()
 }
 
 //

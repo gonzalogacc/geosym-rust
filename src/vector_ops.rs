@@ -4,7 +4,7 @@ use na::{DVector};
 
 use fft_convolver::FFTConvolver;
 
-pub fn fftconvolve_envuelto2(
+pub fn fftconvolve_envuelto(
     impulse_response: Vec<f32>,
     input: Vec<f32>,
 ) -> Vec<f32> 
@@ -81,7 +81,6 @@ pub fn toeplitz_covariance_to_impulse(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use na::DMatrix;
 
     // use ndarray::{Array1, Array2};
 
@@ -128,7 +127,7 @@ mod tests {
     fn test_fftconvolve2_1d() {
         let in1: Vec<f32> = vec![1.0, 2.0, 3.0];
         let in2: Vec<f32> = vec![6.0, 5.0, 4.0];
-        let out = fftconvolve_envuelto2(in1, in2);
+        let out = fftconvolve_envuelto(in1, in2);
 
         // El modo de esta convolución no es "valid", no importa.
         let expected: Vec<f32> = vec![6., 17., 32.];

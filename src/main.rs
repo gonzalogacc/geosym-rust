@@ -2,9 +2,12 @@
 //mod simulatenoise;
 #[macro_use]
 mod macros;
+
+#[macro_use]
+extern crate approx;
+
 mod noise;
-mod fftconvolve;
-// mod fftconv_externo;
+mod vector_ops;
 mod create_hs;
 mod combinacion;
 use clap::Parser;
