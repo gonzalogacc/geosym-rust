@@ -1,10 +1,14 @@
-
 use std::io;
 use std::f32::consts::PI;
 //use std::error::Error;
 //use crate::utils::Units;
+
+use complex_bessel_rs::bessel_k::bessel_k;
+use num_complex::Complex64;
+
 use serde::Deserialize;
 use crate::vector_ops::toeplitz_covariance_to_impulse;
+
 
 #[allow(dead_code)]
 #[derive(Debug)]
@@ -70,6 +74,60 @@ pub fn varying_anual(m: usize, phi: f32, units: Units, dt: f32, sigma: f32) -> R
     let h = toeplitz_covariance_to_impulse(t);
 
     Ok(SigmaH {sigma: sigma, h: h})
+}
+
+pub fn matern(m: usize, lambda: f32, kappa: f32, sigma: f32) -> Result<SigmaH, ModelError> {
+    let threshold: f32 = 100.0; // No se para que un threshold
+
+    let d: f32 = -0.5 * kappa;
+
+    // Create gamma_x
+    let mut t: Vec<f32> = vec![0.0; m];
+
+    // Constant
+    let alpha: f32 = 2.0 * d;
+
+    let c0: f32 = 2.0 / (f32::gamma(alpha - 0.5) * f32::powf(2.0, alpha - 0.5));
+
+    // Use Modified Bessel Function, second order
+    t[0] = 1.0; // check Eq. (62) and set tau=0
+    let mut i = 1;
+    let tau: Vec<f32> = (0..m as i32).map(|f| f as f32).collect();
+
+    let mut trhix: usize = (threshold / lambda) as usize;
+
+    // Fill values until Threshold with Eq. (60)
+    // thrix puede ser mayor que m en cuyo caso...
+    if trhix > m {
+        trhix = m;
+    };
+    
+    // NOTA: si lo hago con un for anda. Lo podría hacer con un zip y map
+    // que parecería mas rust... pero tendría que usar un puntero a un
+    // elemento de t (como un t_j) y hacer *t_j = ... lo cual a Gonza no le gusta.
+    //
+    for j in 1..trhix {
+        t[j] = c0
+            * f32::powf(lambda * tau[j], alpha - 0.5)
+            * bessel_k( (alpha - 0.5).into(), // Solo funciona con f64
+                        Complex64::new((lambda * tau[j]).into(), 0.0))
+                      .unwrap().re as f32;
+    }
+
+    // Fill values from Threshold on with Eq. (61)
+    // NOTA: si lo hago con un for anda. Lo podría hacer con un zip y map
+    // que parecería mas rust... pero tendría que usar un puntero a un
+    // elemento de t (como un t_j) y hacer *t_j = ... lo cual a Gonza no le gusta.
+    //
+    for j in trhix..m {
+        t[j] = c0 * f32::sqrt(PI / 2.0)
+            * f32::powf(lambda * tau[j], alpha - 0.5)
+            * f32::exp(-lambda * tau[j]);
+    }
+
+    let h = toeplitz_covariance_to_impulse(t);
+
+    Ok(SigmaH { sigma, h })
 }
 
 //def Powerlaw(
@@ -170,7 +228,8 @@ mod tests {
         varying_anual,
         flicker,
         random_walk,
-        generalized_gauss_markov
+        generalized_gauss_markov,
+        matern
     };
 
     #[test]
@@ -398,4 +457,30 @@ mod tests {
         assert!(abs_diff_eq!(sigma, expected_sigma));
     }
 
+
+    #[test]
+    fn test_matern()
+    {
+        let m: usize = 20;
+        let lambda: f32 = 0.10;
+        let kappa: f32 = -2.0;
+        let sigma: f32 = 0.10;
+
+        let expected_h: Vec<f32> = vec!
+            [0.        , 0.04518211, 0.09385747, 0.13285952, 0.16358853,
+                    0.18726587, 0.20495538, 0.21758226, 0.22594987, 0.23075451,
+                    0.23259852, 0.23200187, 0.22941239, 0.22521477, 0.21973859,
+                    0.21326617, 0.20604942, 0.19845963, 0.19306317, 0.32205264];
+
+
+        let expected_sigma: f32 = 0.1;
+
+        let SigmaH { sigma, h } = matern(m, lambda, kappa, sigma).unwrap();
+
+        println!("{:?}",h);
+        println!("{:?}",expected_h);
+
+        assert!(abs_diff_eq!(h[..], expected_h[..], epsilon= 0.0001));
+        assert!(abs_diff_eq!(sigma, expected_sigma));
+    }
 }

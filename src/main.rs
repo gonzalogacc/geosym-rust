@@ -1,3 +1,5 @@
+#![feature(float_gamma)]
+
 //mod utils;
 //mod simulatenoise;
 #[macro_use]
